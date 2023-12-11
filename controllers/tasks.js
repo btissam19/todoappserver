@@ -24,10 +24,7 @@ export const getAllTasks = async (req, res) => {
     db.query(sql, function (err, result) {
       if (err) throw err;
       else {
-        const obj = {print: result};
-        console.log(obj);
-  
-        res.json(obj);
+       res.json(result);
       }
     })
   }
@@ -50,32 +47,24 @@ export const deleteTask = async (req, res) => {
   }
 };
 
-
-export const updateTask = async (req, res) => {
-  const taskId = req.query.id;
-  const {id, text, completed } = req.body;
-
-  console.log('Update Task Request:', { taskId, text, completed });
-
-  if (!text || typeof completed !== 'boolean') {
-    return res.status(400).json({ error: 'Invalid request data' });
-  }
-
-  const sql = 'UPDATE tasks SET text = ?, completed = ? WHERE id = ?';
-
-  try {
-    const result = await db.query(sql, [text, completed, taskId]);
-
-    // Check if any rows were affected
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Task not found' });
+export const updateTask=async (req, res) => {
+  const id = req.params.id;
+  const completed = Boolean(req.body.completed);
+  const sql = `UPDATE tasks SET completed = ? WHERE id = ?`;
+  db.query(sql, [completed, id], (err, result) => {
+    if (err) {
+      return res.status(500).json({message:err});
     }
 
-    console.log('Task updated successfully');
-    res.json({ message: 'Task updated successfully' });
-  } catch (err) {
-    console.error('Error updating task:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+    db.query(`SELECT * FROM tasks WHERE id = ?`, [id], (err, results) => {
+      if (err) {
+        return res.status(500).json({message:err});
+      }
+
+      return res.json(results[0]);
+    });
+  });
 };
+
+
 

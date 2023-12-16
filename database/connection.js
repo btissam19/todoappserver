@@ -3,7 +3,7 @@ import { createConnection } from 'mysql';
     host: 'localhost',
     user: 'root',
     password: 'password',
-    database: 'todolistApp',
+    database: 'authtodoList',
   });
   
 

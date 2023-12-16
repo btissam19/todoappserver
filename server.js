@@ -8,7 +8,7 @@ import { createTasksTable } from "./models/tasksTable.js";
 import {createUsersTable} from "./models/usersTable.js"
 import { tasks } from "./routes/task.js";
 import {auth} from "./routes/auth.js";
-
+import { verifyuser } from './controllers/auth.js';
 const port = 4000;
 const app = express();
 
@@ -23,6 +23,7 @@ app.use(cors({
 app.use(cookieParser());
 
 app.use('/',auth);
+app.use(verifyuser)
 app.use('/', tasks);
 
 
@@ -33,8 +34,9 @@ db.connect((err) => {
     console.error('MySQL connection error:', err);
   } else {
     console.log('Connected to MySQL database');
-    createTasksTable();
     createUsersTable();
+    createTasksTable();
+  
     app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
     });

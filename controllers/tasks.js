@@ -1,19 +1,18 @@
-// models/tasksTable.js
 import { db } from '../database/connection.js';
-
 export const addingTask = async (req, res) => {
   const { text } = req.body;
+  const user_id = req.user.id; 
 
-  if (!text) {
+  if (!text || !user_id) {
     return res.status(400).send('Invalid request data');
   }
 
-  const sql = 'INSERT INTO tasks (text) VALUES (?)';
+  const sql = 'INSERT INTO tasks (text, user_id) VALUES (?, ?)';
 
   try {
-    const result = await db.query(sql, [text]);
+    const result = await db.query(sql, [text, user_id]);
     console.log('Task added successfully');
-    res.json({ text, completed: false }); // You can still send completed: false here if you want
+    res.json({ text, completed: false });
   } catch (err) {
     console.error('Error adding task:', err);
     res.status(500).send('Internal Server Error');
@@ -21,20 +20,26 @@ export const addingTask = async (req, res) => {
 };
 
 
+
+
 export const getAllTasks = async (req, res) => {
-  const sql = 'SELECT * FROM tasks';
-    db.query(sql, function (err, result) {
-      if (err) throw err;
-      else {
-       
-      
-  
-        res.json(result);
-      }
-    })
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
   }
+  const user_id = req.user.id; 
+  const sql = 'SELECT * FROM tasks WHERE user_id = ?';
+
+  db.query(sql, [user_id], function (err, result) {
+    if (err) {
+      console.error('Error fetching tasks:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      res.json(result);
+    }
+  });
+};
   export const deleteTask = async (req, res) => {
-    const taskId = req.params.id; // Use params to get the task ID from the URL
+    const taskId = req.params.id;
     const sql = 'DELETE FROM tasks WHERE id = ?';
   
     try {

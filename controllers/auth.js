@@ -56,7 +56,8 @@ export const loginUsers = async (req, res) => {
 
           if (response) {
             const name = data[0].name;
-            const token = jwt.sign({ name }, 'jwtsecret', { expiresIn: '1d' });
+            const id=data[0].id
+            const token = jwt.sign({ name ,id }, 'jwtsecret', { expiresIn: '1d' });
             res.cookie('token', token);
             return res.status(200).json({ Status: 'Success' });
           } else {
@@ -75,24 +76,26 @@ export const loginUsers = async (req, res) => {
 
  
 
- export const verifyuser = (req, res, next) => {
-    const token = req.cookies.token;
-    if (!token) {
-        return res.json({ Error: "you are not authenticated" });
-    } else {
-        jwt.verify(token, "jwtsecret", (err, decoded) => {
-            if (err) {
-                console.error("JWT verification error:", err);
-                return res.json({ Error: "Token verification failed" });
-            } else {
-                // Successful verification, proceed with the logic
-                req.name = decoded.name;
-                next();
-            }
-        });
-        
-    }
+// Middleware to verify user and attach user object to request
+export const verifyuser = (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) {
+      return res.json({ Error: "you are not authenticated" });
+  } else {
+      jwt.verify(token, "jwtsecret", (err, decoded) => {
+          if (err) {
+              console.error("JWT verification error:", err);
+              return res.json({ Error: "Token verification failed" });
+          } else {
+              // Successful verification, attach user object to request
+              req.user = { id: decoded.id};
+              console.log(req.user)
+              next();
+          }
+      });
+  }
 };
+
 export const authorizUsers=async (req,res)=>{
     const username = req.name;
     res.status(200).json({ Status: 'Success', name:username });

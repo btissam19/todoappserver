@@ -27,7 +27,7 @@ export const registerUsers = async (req, res) => {
           console.error('Error inserting user:', err);
           return res.status(500).json({ error: 'Internal Server Error' });
         } else {
-          return res.json({ Status: 'Successfully inserted user' });
+          return res.json({ Status: 'Success' });
         }
       });
     });
@@ -42,28 +42,37 @@ export const loginUsers = async (req, res) => {
     const getUsersQuery = 'SELECT * FROM users WHERE email = ?';
 
     db.query(getUsersQuery, [req.body.email], (err, data) => {
-      if (err) return res.json({ Error: 'Login error in server' });
+      if (err) {
+        console.error('Error querying the database:', err);
+        return res.status(500).json({ Error: 'Login error in server' });
+      }
+
       if (data.length > 0) {
-        console.log(data);
-        bcrypt.compare(req.body.password.toString(), data[0].password, (err, response) => {
-          if (err) return res.json({ Error: 'compare password error ' });
+        bcrypt.compare(req.body.password.toString(), data[0].password, (bcryptErr, response) => {
+          if (bcryptErr) {
+            console.error('Error comparing passwords:', bcryptErr);
+            return res.status(500).json({ Error: 'Compare password error' });
+          }
+
           if (response) {
             const name = data[0].name;
-            const token = jwt.sign({ name }, 'jwt secret ', { expiresIn: '1d' });
+            const token = jwt.sign({ name }, 'jwtsecret', { expiresIn: '1d' });
             res.cookie('token', token);
             return res.status(200).json({ Status: 'Success' });
           } else {
-            return res.status(500).json({ Error: 'password not match' });
+            return res.status(401).json({ Error: 'Password not match' });
           }
         });
       } else {
-        return res.status(500).json({ Error: 'no email' });
+        return res.status(404).json({ Error: 'Email not found' });
       }
     });
   } catch (error) {
-    res.json({ erro: error });
+    console.error('Error in loginUsers function:', error);
+    res.status(500).json({ Error: 'Internal server error' });
   }
 };
+
  
 
  export const verifyuser = (req, res, next) => {
@@ -71,7 +80,7 @@ export const loginUsers = async (req, res) => {
     if (!token) {
         return res.json({ Error: "you are not authenticated" });
     } else {
-        jwt.verify(token, "jwt secret ", (err, decoded) => {
+        jwt.verify(token, "jwtsecret", (err, decoded) => {
             if (err) {
                 console.error("JWT verification error:", err);
                 return res.json({ Error: "Token verification failed" });

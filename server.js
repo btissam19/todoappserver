@@ -12,12 +12,19 @@ import {auth} from "./routes/auth.js";
 const port = 4000;
 const app = express();
 
-app.use(cors());
+
 app.use(bodyParser.json());
+app.use(cors({
+  origin: ['http://localhost:3000'],
+  methods: ['POST', 'GET', 'PATCH', 'DELETE'],
+  credentials: true,
+}));
+
 app.use(cookieParser());
 
-app.use('/', tasks);
 app.use('/',auth);
+app.use('/', tasks);
+
 
 
 
